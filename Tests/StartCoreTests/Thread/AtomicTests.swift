@@ -64,6 +64,26 @@ class AtomicTests: XCTestCase {
         XCTAssertEqual(spa_int_load(value), 1)
         spa_int_free(value)
     }
+    
+//    func testNoAtomicError() {
+//        var value  = 0
+//        let group = DispatchGroup()
+//        for i in 0...100 {
+//            DispatchQueue.global(qos: .background).async {
+//                if i % 2 == 0 {
+//                    value += 1
+//                } else {
+//                    value -= 1
+//                }
+//                if i == 100 {
+//                    group.leave()
+//                }
+//            }
+//        }
+//        group.enter()
+//        _ = group.wait(timeout: .distantFuture)
+//        XCTAssertEqual(value, 1)
+//    }
 
 #if ENABLE_PERFORMANCE_TESTS
     func testCAtomicIntPerformance() {

@@ -43,7 +43,7 @@ public extension Collection {
     }
 
 
-    @inline(__always)
+    @_transparent
     var isNotEmpty: Bool {
         !isEmpty
     }

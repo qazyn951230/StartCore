@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 import Dispatch
-import Foundation
 
 public extension DispatchQueue {
     func apply(iterations: Int, work: @escaping (Int) -> Void) {

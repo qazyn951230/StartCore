@@ -74,7 +74,9 @@ class JSONEncoderTests: XCTestCase {
         }
 
         let encoder = StartJSONEncoder()
-        encoder.outputFormatting = [JSONEncoder.OutputFormatting.sortedKeys]
+        if #available(iOS 11.0, *) {
+            encoder.outputFormatting = [JSONEncoder.OutputFormatting.sortedKeys]
+        }
         XCTAssertEqual(encode(Foobar(), encoder), "{\"a\":12,\"b\":[3,4]}")
     }
 

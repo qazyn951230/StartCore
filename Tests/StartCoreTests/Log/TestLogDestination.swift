@@ -20,31 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-public protocol LogDestination {
-    func write(message: Log.Message)
-    func write(messages: [Log.Message])
-}
+@testable import StartCore
 
-public extension LogDestination {
-    func write(messages: [Log.Message]) {
-        for message in messages {
-            self.write(message: message)
-        }
-    }
-}
-
-public struct SimpleLogDestination: LogDestination {
-    private let stream: FileStream
+class TestLogDestination: LogDestination {
+    private(set) var actions: [LogLevel] = []
+    private(set) var messages: [String] = []
     
-    public init(stream: FileStream? = nil) {
-        self.stream = stream ?? FileStream.standardOutput()
-    }
-    
-    public func write(message: Log.Message) {
-        stream.write("\(message.tag) \(message.level)")
-        stream.write(" [\(message.file):\(message.line):\(message.column)] \(message.function)\n")
-        stream.write(message.subject)
-        stream.write(0x0a)
-        stream.flush()
+    func write(message: Log.Message) {
+        actions.append(message.level)
+        messages.append(message.subject)
     }
 }

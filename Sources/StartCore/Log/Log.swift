@@ -20,21 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import Foundation
 import Dispatch
-public final class Log {
-#if DEBUG
-    public static let global = Log(.verbose, tag: "com.undev.global", to: [DefaultLogDestination()])
-#else
-    public static let global = Log(.off, tag: "com.undev.global", to: [DefaultLogDestination()])
-#endif
 
-    public var level: LogLevel
-    public var destinations: [LogDestination]
+public final class Log {
+    public let level: LogLevel
+    public let destinations: [LogDestination]
     public let tag: String
 
     @usableFromInline
-    let queue: DispatchQueue
+    let queue: DispatchQueue?
+    @usableFromInline
+    let useDebugFormat: Bool
     @usableFromInline
     var messages: [Message] = []
     @usableFromInline
@@ -43,12 +39,23 @@ public final class Log {
     deinit {
         spa_bool_free(writing)
     }
+    
+    public init(_ level: LogLevel, tag: String, to destinations: [LogDestination],
+                debugFormat: Bool = false) {
+        self.level = level
+        self.destinations = destinations
+        self.tag = tag
+        self.useDebugFormat = debugFormat
+        self.queue = nil
+    }
 
-    public init(_ level: LogLevel, tag: String, queue: DispatchQueue? = nil, to destinations: [LogDestination]) {
+    public init(_ level: LogLevel, tag: String, queue: DispatchQueue?,
+                to destinations: [LogDestination], debugFormat: Bool = false) {
         self.level = level
         self.destinations = destinations
         self.tag = tag
         self.queue = queue ?? DispatchQueue(label: tag, qos: .utility)
+        self.useDebugFormat = debugFormat
     }
 
     @inlinable
@@ -112,7 +119,8 @@ public final class Log {
         guard self.level >= .verbose && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:next:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .verbose, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -124,7 +132,8 @@ public final class Log {
         guard self.level >= .debug && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:next:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .debug, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -136,7 +145,8 @@ public final class Log {
         guard self.level >= .info && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:next:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .info, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -148,7 +158,8 @@ public final class Log {
         guard self.level >= .warn && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:next:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .warn, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -160,7 +171,8 @@ public final class Log {
         guard self.level >= .error && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:next:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .error, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -172,7 +184,8 @@ public final class Log {
         guard self.level >= .verbose && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:any:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .verbose, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -184,7 +197,8 @@ public final class Log {
         guard self.level >= .debug && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:any:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .debug, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -196,7 +210,8 @@ public final class Log {
         guard self.level >= .info && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:any:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .info, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -208,7 +223,8 @@ public final class Log {
         guard self.level >= .warn && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:any:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .warn, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -220,7 +236,8 @@ public final class Log {
         guard self.level >= .error && self.level > LogLevel.off else {
             return
         }
-        let subject = value.reduce("", Log.format(result:any:))
+        let subject = useDebugFormat ? value.reduce("", Log.debugFormat(result:next:)) :
+            value.reduce("", Log.format(result:next:))
         let message = Message(level: .error, tag: self.tag, subject: subject, file: file,
             function: function, line: line, column: column)
         self.write(message: message)
@@ -231,9 +248,7 @@ public final class Log {
             return
         }
         messages.append(message)
-        queue.async {
-            self.flush()
-        }
+        scheduleFlush()
     }
 
     @inlinable
@@ -257,12 +272,20 @@ public final class Log {
             function: function, line: line, column: column)
         write(message: message)
     }
-
-    func flush() {
-        if spa_bool_load(writing) {
+    
+    @inline(__always)
+    func scheduleFlush() {
+        if let queue = self.queue {
             queue.async {
                 self.flush()
             }
+        } else {
+            flush()
+        }
+    }
+
+    func flush() {
+        if spa_bool_load(writing) {
             return
         }
         spa_bool_store(writing, true)
@@ -273,181 +296,9 @@ public final class Log {
             destination.write(messages: messages)
         }
         spa_bool_store(writing, false)
-    }
-
-    @inlinable
-    public static func verbose(_ value: @autoclosure () -> String, file: String = #file,
-        function: String = #function, line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .verbose && global.level > LogLevel.off else {
-            return
+        if self.messages.isNotEmpty {
+            scheduleFlush()
         }
-        let message = Message(level: .verbose, tag: global.tag, subject: value(), file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func debug(_ value: @autoclosure () -> String, file: String = #file,
-        function: String = #function, line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .debug && global.level > LogLevel.off else {
-            return
-        }
-        let message = Message(level: .debug, tag: global.tag, subject: value(), file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func info(_ value: @autoclosure () -> String, file: String = #file,
-        function: String = #function, line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .info && global.level > LogLevel.off else {
-            return
-        }
-        let message = Message(level: .info, tag: global.tag, subject: value(), file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func warn(_ value: @autoclosure () -> String, file: String = #file,
-        function: String = #function, line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .warn && global.level > LogLevel.off else {
-            return
-        }
-        let message = Message(level: .warn, tag: global.tag, subject: value(), file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func error(_ value: @autoclosure () -> String, file: String = #file,
-        function: String = #function, line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .error && global.level > LogLevel.off else {
-            return
-        }
-        let message = Message(level: .error, tag: global.tag, subject: value(), file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func verbose(_ value: Any..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .verbose && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:next:))
-        let message = Message(level: .verbose, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func debug(_ value: Any..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .debug && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:next:))
-        let message = Message(level: .debug, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func info(_ value: Any..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .info && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:next:))
-        let message = Message(level: .info, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func warn(_ value: Any..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .warn && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:next:))
-        let message = Message(level: .warn, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func error(_ value: Any..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .error && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:next:))
-        let message = Message(level: .error, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func verbose(any value: Any?..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .verbose && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:any:))
-        let message = Message(level: .verbose, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func debug(any value: Any?..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .debug && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:any:))
-        let message = Message(level: .debug, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func info(any value: Any?..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .info && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:any:))
-        let message = Message(level: .info, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func warn(any value: Any?..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .warn && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:any:))
-        let message = Message(level: .warn, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
-    }
-
-    @inlinable
-    public static func error(any value: Any?..., file: String = #file, function: String = #function,
-        line: UInt = #line, column: UInt = #column) {
-        guard global.level >= .error && global.level > LogLevel.off else {
-            return
-        }
-        let subject = value.reduce("", Log.format(result:any:))
-        let message = Message(level: .error, tag: global.tag, subject: subject, file: file,
-            function: function, line: line, column: column)
-        global.write(message: message)
     }
 
     public struct Message {
@@ -476,8 +327,9 @@ public final class Log {
         }
     }
 
+    @usableFromInline
     @inline(__always)
-    public static func debugFormat(result: String, any value: Any?) -> String {
+    static func debugFormat(result: String, any value: Any?) -> String {
         if let temp = value {
             return result.isEmpty ? debugFormat(temp) : "\(result) \(debugFormat(temp))"
         } else {
@@ -485,13 +337,15 @@ public final class Log {
         }
     }
 
+    @usableFromInline
     @inline(__always)
-    public static func debugFormat(result: String, next value: Any) -> String {
+    static func debugFormat(result: String, next value: Any) -> String {
         result.isEmpty ? debugFormat(value) : "\(result) \(debugFormat(value))"
     }
 
+    @usableFromInline
     @inline(__always)
-    public static func debugFormat(_ value: Any) -> String {
+    static func debugFormat(_ value: Any) -> String {
         switch value {
         case let a as CustomStringConvertible:
             return a.description
@@ -502,8 +356,9 @@ public final class Log {
         }
     }
 
+    @usableFromInline
     @inline(__always)
-    public static func format(result: String, any value: Any?) -> String {
+    static func format(result: String, any value: Any?) -> String {
         if let temp = value {
             return result.isEmpty ? format(temp) : "\(result) \(format(temp))"
         } else {
@@ -511,13 +366,15 @@ public final class Log {
         }
     }
 
+    @usableFromInline
     @inline(__always)
-    public static func format(result: String, next value: Any) -> String {
+    static func format(result: String, next value: Any) -> String {
         result.isEmpty ? format(value) : "\(result) \(format(value))"
     }
 
+    @usableFromInline
     @inline(__always)
-    public static func format(_ value: Any) -> String {
+    static func format(_ value: Any) -> String {
         switch value {
         case let a as CustomStringConvertible:
             return a.description
