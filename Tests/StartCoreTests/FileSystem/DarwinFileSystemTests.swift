@@ -51,7 +51,7 @@ final class DarwinFileSystemTests: XCTestCase {
         while let next = iterator.next() {
             result.append(next.path.filename)
         }
-        XCTAssertEqual(result.sorted(), ["Codable", "Extension", "FileSystem", "Layout", "React",
-                                         "Resouces", "Router", "Stream", "Thread", "info.plist"])
+        XCTAssertEqual(result.sorted(), ["Codable", "Extension", "FileSystem", "Resources",
+                                         "Stream", "Thread", "XCTestManifests.swift"])
     }
 }

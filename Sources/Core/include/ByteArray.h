@@ -23,9 +23,9 @@
 #ifndef START_POINT_BYTE_ARRAY_H
 #define START_POINT_BYTE_ARRAY_H
 
-#if defined(__OBJC2__)
+#if defined(__OBJC__)
 #import <Foundation/Foundation.h>
-#endif
+#endif // defined(__OBJC__)
 
 #if (__cplusplus)
 

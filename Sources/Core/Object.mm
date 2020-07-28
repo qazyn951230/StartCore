@@ -24,9 +24,11 @@
 
 SP_EXTERN_C_BEGIN
 
+#if defined(__OBJC__)
 NSString *stringAddress(id object) {
     return [NSString stringWithFormat:@"%p", (__bridge void *)object];
 }
+#endif // defined(__OBJC__)
 
 size_t longAddress(id object) {
     return (size_t)((__bridge void *)object);

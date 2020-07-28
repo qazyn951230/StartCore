@@ -65,6 +65,7 @@ class AtomicTests: XCTestCase {
         spa_int_free(value)
     }
 
+#if ENABLE_PERFORMANCE_TESTS
     func testCAtomicIntPerformance() {
         measure {
             let value = spa_int_create(0)
@@ -74,4 +75,5 @@ class AtomicTests: XCTestCase {
             spa_int_free(value)
         }
     }
+#endif // ENABLE_PERFORMANCE_TESTS
 }

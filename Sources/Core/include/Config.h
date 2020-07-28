@@ -23,32 +23,33 @@
 #ifndef START_POINT_CONFIG_H
 #define START_POINT_CONFIG_H
 
+// ------------- FILE ------------------
+
 #if (__cplusplus)
 #define SP_EXTERN_C_BEGIN   extern "C" {
 #define SP_EXTERN_C_END     }
-
-#define SP_NAMESPACE_BEGIN  namespace StartPoint {
-#define SP_NAMESPACE_END    }
-
-#define SP_CPP_FILE_BEGIN   SP_NAMESPACE_BEGIN  \
+#ifdef SP_CPP_USE_NAMESPACE
+#define SP_CPP_FILE_BEGIN   namespace SP_CPP_NAMESPACE { \
                             _Pragma("clang assume_nonnull begin")
 #define SP_CPP_FILE_END     _Pragma("clang assume_nonnull end") \
-                            SP_NAMESPACE_END
+                            }
+#else
+#define SP_CPP_FILE_BEGIN  _Pragma("clang assume_nonnull begin")
+#define SP_CPP_FILE_END    _Pragma("clang assume_nonnull end")
+#endif // #ifdef SP_CPP_USE_NAMESPACE
 #else
 #define SP_EXTERN_C_BEGIN
 #define SP_EXTERN_C_END
-
-#define SP_NAMESPACE_BEGIN  _Pragma("clang assume_nonnull begin")
-#define SP_NAMESPACE_END    _Pragma("clang assume_nonnull end")
-
-#define SP_CPP_FILE_BEGIN
-#define SP_CPP_FILE_END
-#endif // #if (__cplusplus)
+#define SP_CPP_FILE_BEGIN   _Pragma("clang assume_nonnull begin")
+#define SP_CPP_FILE_END     _Pragma("clang assume_nonnull end")
+#endif // (__cplusplus)
 
 #define SP_C_FILE_BEGIN SP_EXTERN_C_BEGIN \
                         _Pragma("clang assume_nonnull begin")
 #define SP_C_FILE_END   _Pragma("clang assume_nonnull end") \
                         SP_EXTERN_C_END
+
+// ------------- FILE ------------------
 
 #if defined(__clang__) || defined(__GNUC__)
 #define SP_LIKELY(x)    __builtin_expect(!!(x), 1)
@@ -58,6 +59,7 @@
 #define SP_UNLIKELY(x)  (x)
 #endif
 
+// ------------- NULLABLE ------------------
 // http://clang.llvm.org/docs/AttributeReference.html#nullability-attributes
 // A nullable pointer to non-null pointers to const characters.
 // const char *join_strings(const char * _Nonnull * _Nullable strings, unsigned n);
@@ -71,10 +73,12 @@
 #define SP_NONNULL
 #define SP_NULL_UNSPECIFIED
 #define SP_NULLABLE
-#endif // #if defined(__clang__)
+#endif // defined(__clang__)
+// ------------- NULLABLE ------------------
 
+// ------------- NSInteger ------------------
 // .../usr/include/objc/NSObjCRuntime.h
-#if !defined(__OBJC2__)
+#if !__has_include(<NSObjCRuntime.h>)
 
 #if __LP64__ || 0 || NS_BUILD_32_LIKE_64
 typedef long NSInteger;
@@ -84,23 +88,16 @@ typedef int NSInteger;
 typedef unsigned int NSUInteger;
 #endif
 
-#endif // #if !defined(__OBJC2__)
+#endif // !__has_include(<NSObjCRuntime.h>)
+// ------------- NSInteger ------------------
 
-// Enums and Options
-#ifdef NS_ENUM
-
-#define SP_ENUM NS_ENUM
-#define SP_OPTIONS NS_OPTIONS
-#define SP_CLOSED_ENUM NS_CLOSED_ENUM
-
-#define SP_STRING_ENUM NS_STRING_ENUM
-#define SP_EXTENSIBLE_STRING_ENUM NS_EXTENSIBLE_STRING_ENUM
-
-#define SP_TYPED_ENUM NS_TYPED_ENUM
-#define SP_TYPED_EXTENSIBLE_ENUM NS_TYPED_EXTENSIBLE_ENUM
-
+// ------------- NSEnum ------------------
+#if defined(CF_ENUM)
+#define SP_ENUM CF_ENUM
+#define SP_OPTIONS CF_OPTIONS
 #else
-
+// .../CoreFoundation.framework/Headers/CFAvailability.h
+// Enums and Options
 #if __has_attribute(enum_extensibility)
 #define __SP_ENUM_ATTRIBUTES __attribute__((enum_extensibility(open)))
 #define __SP_CLOSED_ENUM_ATTRIBUTES __attribute__((enum_extensibility(closed)))
@@ -112,10 +109,11 @@ typedef unsigned int NSUInteger;
 #endif
 
 #define __SP_ENUM_GET_MACRO(_1, _2, NAME, ...) NAME
-#if (__cplusplus && __cplusplus >= 201103L && (__has_extension(cxx_strong_enums) || __has_feature(objc_fixed_enum))) || (!__cplusplus && __has_feature(objc_fixed_enum))
-#define __SP_NAMED_ENUM(_type, _name)   enum __SP_ENUM_ATTRIBUTES _name : _type _name; enum _name : _type
-#define __SP_ANON_ENUM(_type)           enum __SP_ENUM_ATTRIBUTES : _type
-#define SP_CLOSED_ENUM(_type, _name)    enum __SP_CLOSED_ENUM_ATTRIBUTES _name : _type _name; enum _name : _type
+#if (__cplusplus && __cplusplus >= 201103L && (__has_extension(cxx_strong_enums) || \
+    __has_feature(objc_fixed_enum))) || (!__cplusplus && __has_feature(objc_fixed_enum))
+#define __SP_NAMED_ENUM(_type, _name)     enum __SP_ENUM_ATTRIBUTES _name : _type _name; enum _name : _type
+#define __SP_ANON_ENUM(_type)             enum __SP_ENUM_ATTRIBUTES : _type
+#define SP_CLOSED_ENUM(_type, _name)      enum __SP_CLOSED_ENUM_ATTRIBUTES _name : _type _name; enum _name : _type
 #if (__cplusplus)
 #define SP_OPTIONS(_type, _name) _type _name; enum __SP_OPTIONS_ATTRIBUTES : _type
 #else
@@ -128,36 +126,40 @@ typedef unsigned int NSUInteger;
 #define SP_OPTIONS(_type, _name) _type _name; enum
 #endif
 
+/* SP_ENUM supports the use of one or two arguments.
+ * The first argument is always the integer type used for the values of the enum.
+ * The second argument is an optional type name for the macro.
+ * When specifying a type name, you must precede the macro with 'typedef' like so:
+
+typedef SP_ENUM(CFIndex, CFComparisonResult) {
+    ...
+};
+
+If you do not specify a type name, do not use 'typdef', like so:
+
+SP_ENUM(CFIndex) {
+    ...
+};
+*/
+
 #define SP_ENUM(...) __SP_ENUM_GET_MACRO(__VA_ARGS__, __SP_NAMED_ENUM, __SP_ANON_ENUM, )(__VA_ARGS__)
+#endif
+// ------------- NSEnum ------------------
 
-#if __has_attribute(swift_wrapper)
-#define _SP_TYPED_ENUM __attribute__((swift_wrapper(enum)))
+// ------------- NS_SWIFT_NAME ------------------
+#if defined(CF_SWIFT_NAME)
+#define SP_SWIFT_NAME CF_SWIFT_NAME
 #else
-#define _SP_TYPED_ENUM
-#endif
-
-#if __has_attribute(swift_wrapper)
-#define _SP_TYPED_EXTENSIBLE_ENUM __attribute__((swift_wrapper(struct)))
+// CoreFoundation.framework/Headers/CFBase.h
+#if __has_attribute(swift_name)
+# define SP_SWIFT_NAME(_name) __attribute__((swift_name(#_name)))
 #else
-#define _SP_TYPED_EXTENSIBLE_ENUM
+# define SP_SWIFT_NAME(_name)
 #endif
+#endif // defined(CF_ENUM)
+// ------------- NS_SWIFT_NAME ------------------
 
-#if DEPLOYMENT_RUNTIME_SWIFT
-#define SP_STRING_ENUM
-#define SP_EXTENSIBLE_STRING_ENUM
-
-#define SP_TYPED_ENUM
-#define SP_TYPED_EXTENSIBLE_ENUM
-#else
-#define SP_STRING_ENUM _SP_TYPED_ENUM
-#define SP_EXTENSIBLE_STRING_ENUM _SP_TYPED_EXTENSIBLE_ENUM
-
-#define SP_TYPED_ENUM _SP_TYPED_ENUM
-#define SP_TYPED_EXTENSIBLE_ENUM _SP_TYPED_EXTENSIBLE_ENUM
-#endif
-
-#endif
-
+// ------------- NS_NOESCAPE ------------------
 #ifdef NS_NOESCAPE
 
 #define SP_NOESCAPE NS_NOESCAPE
@@ -171,6 +173,12 @@ typedef unsigned int NSUInteger;
 #endif
 
 #endif
+// ------------- NS_NOESCAPE ------------------
+
+// ------------- CAST ------------------
+#ifndef SP_OPAQUE_POINTER
+#define SP_OPAQUE_POINTER(x) typedef struct x##_t* x##_p
+#endif // SP_OPAQUE_POINTER
 
 #if (__cplusplus)
 
@@ -183,9 +191,35 @@ inline CRef wrap(const CxxType* value) {                        \
     return reinterpret_cast<CRef>(const_cast<CxxType*>(value)); \
 }                                                               \
 
+#define SP_STATIC_CONVERSION(TARGET, SOURCE)                    \
+inline TARGET unwrap(const SOURCE& value) {                     \
+return static_cast<TARGET>(value);                              \
+}                                                               \
+                                                                \
+inline SOURCE wrap(const TARGET& value) {                       \
+return static_cast<SOURCE>(value);                              \
+}                                                               \
+
+#define SP_CLASS_CONVERSION(TARGET, SOURCE)                                                     \
+inline const TARGET& unwrap(const SOURCE& value) {                                              \
+return *const_cast<const TARGET*>(reinterpret_cast<TARGET*>(const_cast<SOURCE*>(&value)));      \
+}                                                                                               \
+                                                                                                \
+inline TARGET& unwrap(SOURCE& value) {                                                          \
+    return *reinterpret_cast<TARGET*>(&value);                                                  \
+}                                                                                               \
+                                                                                                \
+inline const SOURCE& wrap(const TARGET& value) {                                                \
+    return *const_cast<const SOURCE*>(reinterpret_cast<SOURCE*>(const_cast<TARGET*>(&value)));  \
+}                                                                                               \
+                                                                                                \
+inline SOURCE& wrap(TARGET& value) {                                                            \
+    return *reinterpret_cast<SOURCE*>(&value);                                                  \
+}                                                                                               \
+
 #define SP_POINTER_CAST(type, source) (reinterpret_cast<type>(source))
 
-#else
+#else // (__cplusplus)
 
 #define SP_SIMPLE_CONVERSION(CxxType, CRef)                     \
 inline CxxType *unwrap(CRef value) {                            \
@@ -196,8 +230,19 @@ inline CRef wrap(const CxxType* value) {                        \
     return (CRef)(const_cast<CxxType*>(value));                 \
 }                                                               \
 
+#define SP_STATIC_CONVERSION(TARGET, SOURCE)                    \
+inline TARGET unwrap(const SOURCE& value) {                     \
+return (TARGET)(value);                                         \
+}                                                               \
+                                                                \
+inline SOURCE wrap(const TARGET& value) {                       \
+return (SOURCE)(value);                                         \
+}                                                               \
+
 #define SP_POINTER_CAST(type, source) ((type)(source))
 
-#endif
+#endif // (__cplusplus)
+
+// ------------- CAST ------------------
 
 #endif // START_POINT_CONFIG_H

@@ -2,8 +2,11 @@
 
 import PackageDescription
 
+let enablePerformanceTests = false
+let enableBundleTests = false
+
 let package = Package(
-    name: "StartPoint",
+    name: "StartCore",
     platforms: [.macOS(.v10_14), .iOS(.v10)],
     products: [
         .library(name: "StartCore", targets: ["StartCore"]),
@@ -13,12 +16,23 @@ let package = Package(
         .target(
             name: "Core",
             dependencies: [],
-            cxxSettings: [.unsafeFlags(["-std=c++17"])]),
+            cxxSettings: [
+                .unsafeFlags(["-std=c++17"]),
+                .define("SP_CPP_USE_NAMESPACE"),
+                .define("SP_CPP_NAMESPACE", to: "StartPoint"),
+            ]
+        ),
         .target(
             name: "StartCore",
-            dependencies: ["Core"]),
+            dependencies: ["Core"]
+        ),
         .testTarget(
             name: "StartCoreTests",
-            dependencies: ["StartCore"])),
+            dependencies: ["StartCore"],
+            swiftSettings: [
+                .define(enablePerformanceTests ? "ENABLE_PERFORMANCE_TESTS" : "DISABLE_PERFORMANCE_TESTS"),
+                .define(enableBundleTests ? "ENABLE_BUNDLE_TESTS" : "DISABLE_BUNDLE_TESTS"),
+            ]
+        ),
     ]
 )

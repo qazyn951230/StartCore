@@ -20,12 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#if defined(__OBJC__)
 #import <Foundation/Foundation.h>
+#endif // defined(__OBJC__)
+
 #import "Config.h"
 
 SP_C_FILE_BEGIN
 
+#if defined(__OBJC__)
 NSString *stringAddress(id object);
+#endif // defined(__OBJC__)
+
 size_t longAddress(id object);
 
 SP_C_FILE_END

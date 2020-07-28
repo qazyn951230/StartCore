@@ -22,6 +22,8 @@
 
 #import "JSON.hpp"
 
+#if defined(__OBJC__)
+
 using namespace StartPoint;
 using json = StartPoint::JSON<>;
 
@@ -125,3 +127,5 @@ void json_double_to_string(double value, SP_NOESCAPE json_to_string_t method) {
     const auto text = std::to_string(value);
     method(reinterpret_cast<const uint8_t*>(text.data()), static_cast<NSInteger>(text.size()));
 }
+
+#endif // defined(__OBJC__)

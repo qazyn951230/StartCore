@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#if ENABLE_PERFORMANCE_TESTS
+
 import XCTest
 @testable import StartCore
 
@@ -93,3 +95,5 @@ final class LockTests: XCTestCase {
         }
     }
 }
+
+#endif // ENABLE_PERFORMANCE_TESTS

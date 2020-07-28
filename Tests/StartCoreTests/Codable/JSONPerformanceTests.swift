@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#if ENABLE_BUNDLE_TESTS
+
 @testable import StartCore
 import XCTest
 
@@ -329,3 +331,5 @@ fileprivate final class XCBuildSettings: Codable {
         case wrapperSuffix = "WRAPPER_SUFFIX"
     }
 }
+
+#endif // ENABLE_BUNDLE_TESTS

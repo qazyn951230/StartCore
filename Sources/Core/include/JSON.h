@@ -30,9 +30,9 @@
 #include <stdbool.h>
 #endif
 
-#if defined(__OBJC2__)
+#if defined(__OBJC__)
 #import <Foundation/Foundation.h>
-#endif
+#endif // defined(__OBJC__)
 
 #include "Config.h"
 
@@ -119,14 +119,12 @@ JSONRef SP_NULLABLE json_array_get_index(JSONRef json, uint32_t index);
 
 uint32_t json_object_size(JSONRef json);
 
-#if defined(__OBJC2__)
+#if defined(__OBJC__)
 typedef void (^json_object_for_each_t)(const void*, uint32_t size, JSONRef json);
 void json_object_for_each(JSONRef json, SP_NOESCAPE json_object_for_each_t method);
-#endif
 
-#if defined(__OBJC2__)
 NSArray<NSString *>* json_object_all_key(JSONRef json);
-#endif
+#endif // defined(__OBJC__)
 
 bool json_get_int32(JSONRef json, int32_t* result);
 bool json_get_int64(JSONRef json, int64_t* result);
@@ -146,7 +144,7 @@ JSONRef SP_NULLABLE json_parse_uint8_data(const uint8_t* data);
 JSONRef SP_NULLABLE json_parse_int8_data_status(const int8_t* data, JSONParseStatus* SP_NULLABLE status);
 JSONRef SP_NULLABLE json_parse_uint8_data_status(const uint8_t* data, JSONParseStatus* SP_NULLABLE status);
 
-#if defined(__OBJC2__)
+#if defined(__OBJC__)
 typedef void (^json_to_string_t)(const uint8_t*, NSInteger size);
 void json_int_to_string(NSInteger value, SP_NOESCAPE json_to_string_t method);
 void json_int8_to_string(int8_t value, SP_NOESCAPE json_to_string_t method);
@@ -162,7 +160,7 @@ void json_uint64_to_string(uint64_t value, SP_NOESCAPE json_to_string_t method);
 
 void json_float_to_string(float value, SP_NOESCAPE json_to_string_t method);
 void json_double_to_string(double value, SP_NOESCAPE json_to_string_t method);
-#endif
+#endif // defined(__OBJC__)
 
 SP_C_FILE_END
 
