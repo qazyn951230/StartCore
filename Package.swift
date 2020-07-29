@@ -27,6 +27,14 @@ let package = Package(
             dependencies: ["Core"]
         ),
         .testTarget(
+            name: "CoreTests",
+            dependencies: ["Core"],
+            swiftSettings: [
+                .define(enablePerformanceTests ? "ENABLE_PERFORMANCE_TESTS" : "DISABLE_PERFORMANCE_TESTS"),
+                .define(enableBundleTests ? "ENABLE_BUNDLE_TESTS" : "DISABLE_BUNDLE_TESTS"),
+            ]
+        ),
+        .testTarget(
             name: "StartCoreTests",
             dependencies: ["StartCore"],
             swiftSettings: [

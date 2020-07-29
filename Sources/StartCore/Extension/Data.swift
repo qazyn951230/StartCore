@@ -30,7 +30,7 @@ extension Data {
                     t.initialize(from: raw.assumingMemoryBound(to: T.self), count: 1)
                 }
             } else {
-                assert(false)
+                fatalError()
             }
         }
     }
@@ -45,7 +45,7 @@ extension Data {
                     t.initialize(from: raw.assumingMemoryBound(to: T.self), count: 1)
                 }
             } else {
-                assert(false)
+                fatalError()
             }
         }
         return target
@@ -58,7 +58,7 @@ extension Data {
                 let raw = base + offset
                 return raw.load(as: type)
             } else {
-                assert(false)
+                fatalError()
             }
         }
     }

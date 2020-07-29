@@ -1,0 +1,5 @@
+---
+Name: Core
+Tags:
+- Name: SPMemoryOrder
+  SwiftName: MemoryOrder

@@ -20,11 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+@testable import Core
 import XCTest
 import Dispatch
-@testable import StartCore
 
-class AtomicTests: XCTestCase {
+extension DispatchQueue {
+    func apply(iterations: Int, work: @escaping (Int) -> Void) {
+        __dispatch_apply(iterations, self, work)
+    }
+}
+
+final class AtomicTests: XCTestCase {
+    func testAtomicIntCreate() {
+        let a = spa_int_create(0)
+        XCTAssertEqual(spa_int_load(a), 0)
+        spa_int_free(a)
+
+        let b = spa_int_create(42)
+        XCTAssertEqual(spa_int_load(b), 42)
+        spa_int_free(b)
+    }
+
+    func testAtomicIntLoad() {
+        let a = spa_int_create(0)
+        XCTAssertEqual(spa_int_load_explicit(a, .relaxed), 0)
+        spa_int_free(a)
+
+        let b = spa_int_create(42)
+        XCTAssertEqual(spa_int_load_explicit(b, .relaxed), 42)
+        spa_int_free(b)
+
+        let c = spa_int_create(23)
+        XCTAssertEqual(spa_int_load_explicit(c, .sequentiallyConsistent), 23)
+        spa_int_free(c)
+    }
+
     func testCAtomicIntAdd() {
         let value: SPAIntRef = spa_int_create(0)
         XCTAssertEqual(spa_int_load(value), 0)
@@ -33,7 +63,7 @@ class AtomicTests: XCTestCase {
         let queue = DispatchQueue(label: "test", qos: .utility, attributes: .concurrent)
         queue.apply(iterations: 10) { _ in
             group.enter()
-            for _ in 0..<1000 {
+            for _ in 0 ..< 1000 {
                 spa_int_add(value, 1)
             }
             group.leave()
@@ -45,9 +75,9 @@ class AtomicTests: XCTestCase {
 
     // https://github.com/ReactiveX/RxSwift/issues/1853
     func testCAtomicIntDataRace() {
-        let value  = spa_int_create(0)
+        let value = spa_int_create(0)
         let group = DispatchGroup()
-        for i in 0...100 {
+        for i in 0 ... 100 {
             DispatchQueue.global(qos: .background).async {
                 if i % 2 == 0 {
                     spa_int_add(value, 1)
@@ -64,36 +94,28 @@ class AtomicTests: XCTestCase {
         XCTAssertEqual(spa_int_load(value), 1)
         spa_int_free(value)
     }
-    
-//    func testNoAtomicError() {
-//        var value  = 0
-//        let group = DispatchGroup()
-//        for i in 0...100 {
-//            DispatchQueue.global(qos: .background).async {
-//                if i % 2 == 0 {
-//                    value += 1
-//                } else {
-//                    value -= 1
-//                }
-//                if i == 100 {
-//                    group.leave()
-//                }
-//            }
-//        }
-//        group.enter()
-//        _ = group.wait(timeout: .distantFuture)
-//        XCTAssertEqual(value, 1)
-//    }
 
-#if ENABLE_PERFORMANCE_TESTS
-    func testCAtomicIntPerformance() {
-        measure {
-            let value = spa_int_create(0)
-            for _ in 0..<LockTests.max {
-                spa_int_add(value, 1)
+    // https://github.com/apple/swift-evolution/blob/master/proposals/0282-atomics.md#interaction-with-implicit-pointer-conversions
+    func testConcurrentMutation() {
+        let counter = spa_int_create(0)
+        DispatchQueue.concurrentPerform(iterations: 10) { _ in
+            for _ in 0 ..< 1_000_000 {
+                spa_int_add(counter, 1)
             }
-            spa_int_free(value)
         }
+        XCTAssertEqual(spa_int_load(counter), 10_000_000)
+        spa_int_free(counter)
     }
-#endif // ENABLE_PERFORMANCE_TESTS
+
+    #if ENABLE_PERFORMANCE_TESTS
+        func testCAtomicIntPerformance() {
+            measure {
+                let value = spa_int_create(0)
+                for _ in 0 ..< LockTests.max {
+                    spa_int_add(value, 1)
+                }
+                spa_int_free(value)
+            }
+        }
+    #endif // ENABLE_PERFORMANCE_TESTS
 }
