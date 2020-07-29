@@ -9,6 +9,7 @@ let package = Package(
     name: "StartCore",
     platforms: [.macOS(.v10_14), .iOS(.v10)],
     products: [
+        .library(name: "Core", targets: ["Core"]),
         .library(name: "StartCore", targets: ["StartCore"]),
     ],
     dependencies: [],
