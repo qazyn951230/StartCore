@@ -55,7 +55,7 @@ final class BinaryPropertyListReader: PropertyListReader {
     }
 
     private func readFooter() -> Bool {
-        stream.seek(offset: -Footer.size, direction: .end)
+        _ = stream.seek(offset: -Footer.size, direction: .end)
         guard let raw = stream.peek(count: Footer.size) else {
             return false
         }
@@ -71,7 +71,7 @@ final class BinaryPropertyListReader: PropertyListReader {
 
     private func readOffsetTable() -> Bool {
         assert(offsetTable.isEmpty)
-        stream.seek(offset: offsetTableStart, direction: .start)
+        _ = stream.seek(offset: offsetTableStart, direction: .start)
         offsetTable.reserveCapacity(objectCount)
         objects.reserveCapacity(objectCount)
         for _ in 0..<objectCount {
@@ -88,7 +88,7 @@ final class BinaryPropertyListReader: PropertyListReader {
         if let cached = objects[offset] {
             return cached
         }
-        stream.seek(offset: offset, direction: .start)
+        _ = stream.seek(offset: offset, direction: .start)
         let object = readObject()
         objects[offset] = object
         return object

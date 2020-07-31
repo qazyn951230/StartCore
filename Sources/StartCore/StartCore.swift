@@ -21,3 +21,17 @@
 // SOFTWARE.
 
 @_exported import Core
+
+@inlinable
+func stringAddress<T>(_ object: T) -> String {
+    withUnsafePointer(to: object) { (pointer: UnsafePointer<T>) in
+        String(format: "%p", pointer)
+    }
+}
+
+@inlinable
+func longAddress<T>(_ object: T) -> Int {
+    withUnsafePointer(to: object) { (pointer: UnsafePointer<T>) in
+        Int(bitPattern: pointer)
+    }
+}

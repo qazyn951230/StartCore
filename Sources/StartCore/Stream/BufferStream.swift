@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 public protocol BufferOutputStream: OutputStream {
-    associatedtype WriteBuffer: Buffer
+    associatedtype WriteBuffer: MutableBuffer
 
     var writeBuffer: WriteBuffer { get set }
 }

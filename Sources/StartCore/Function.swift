@@ -20,7 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-public struct Function {
+@frozen
+public enum Function {
     @inline(__always)
     public static func this<T>(_ value: T) -> T {
         value
@@ -201,5 +202,10 @@ public struct Function {
     @inline(__always)
     public static func print(_ value: Any) {
         Swift.print(value)
+    }
+    
+    @inline(__always)
+    public static func debugPrint(_ value: Any) {
+        Swift.debugPrint(value)
     }
 }

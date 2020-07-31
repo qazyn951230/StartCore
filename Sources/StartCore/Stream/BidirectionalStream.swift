@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-public enum SeekDirection {
-    case current
-    case start
-    case end
+public enum SeekDirection: Int32 {
+    case start = 0
+    case current = 1
+    case end = 2
 }
 
 public protocol BidirectionalStream {
@@ -37,13 +37,13 @@ public protocol BidirectionalStream {
 
     func distance(from start: Index, to end: Index) -> Int
 
-    func seek(position: Index)
-    func seek(offset: Index, direction: SeekDirection)
+    func seek(position: Index) -> Bool
+    func seek(offset: Index, direction: SeekDirection) -> Bool
 }
 
 public extension BidirectionalStream {
     @inlinable
-    func seek(position: Index) {
+    func seek(position: Index) -> Bool {
         seek(offset: position, direction: .start)
     }
 

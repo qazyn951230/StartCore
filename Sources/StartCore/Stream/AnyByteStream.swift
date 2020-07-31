@@ -47,7 +47,7 @@ public class AnyByteStream: ByteStream, UnsafeRandomAccessStream {
         fatalError("readAll() has not been implemented")
     }
     
-    public func seek(offset: Int, direction: SeekDirection) {
+    public func seek(offset: Int, direction: SeekDirection) -> Bool {
         fatalError("seek(offset:direction:) has not been implemented")
     }
     

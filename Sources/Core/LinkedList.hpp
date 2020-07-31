@@ -26,7 +26,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cassert>
-#include "LinkedList.h"
+#include "include/LinkedList.h"
 
 SP_CPP_FILE_BEGIN
 
@@ -166,7 +166,7 @@ public:
 
 private:
     static const auto sizeOfNode = sizeof(Node);
-    
+
     constexpr auto sizeOfElement() const {
         return sizeOfNode + _size;
     }

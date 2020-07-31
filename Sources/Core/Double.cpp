@@ -24,8 +24,8 @@
 #include <cstring>
 #include <climits>
 #include <cmath>
-#include "Config.h"
-#include "Double.h"
+#include "include/Config.h"
+#include "include/Double.h"
 
 static inline double pow10(int n) {
     static const double e[] = {

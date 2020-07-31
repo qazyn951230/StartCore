@@ -24,16 +24,16 @@ import Foundation
 import Darwin.C
 
 public final class FileStream: ByteStream, BufferStream, RandomAccessStream {
-    public typealias WriteBuffer = UIntBuffer
-    public typealias ReadBuffer = UIntBuffer
+    public typealias WriteBuffer = MemoryBuffer
+    public typealias ReadBuffer = MemoryBuffer
     public typealias Value = UInt8
     public typealias Index = Int
     public static let defaultBufferCapacity = 1024
 
     public let readable: Bool
     public let writable: Bool
-    public var writeBuffer = UIntBuffer(capacity: FileStream.defaultBufferCapacity)
-    public var readBuffer = UIntBuffer(capacity: FileStream.defaultBufferCapacity)
+    public var writeBuffer = MemoryBuffer(capacity: FileStream.defaultBufferCapacity)
+    public var readBuffer = MemoryBuffer(capacity: FileStream.defaultBufferCapacity)
     public private(set) var error: Error?
 
     let behavior: Behavior
@@ -174,16 +174,24 @@ public final class FileStream: ByteStream, BufferStream, RandomAccessStream {
         writeBuffer.removeAll(keepingCapacity: true)
         fflush(file)
     }
-    
-    public func seek(offset: Int, direction: SeekDirection) {
+
+    public func seek(offset: Int, direction: SeekDirection) -> Bool {
+        fseek(file, offset, direction.rawValue) == 0
     }
 
     public func peek() -> UInt8 {
-        0
+        guard readable else {
+            return 0
+        }
+        return readBuffer.current.pointee
     }
 
     public func peek(offset: Int) -> UInt8 {
-        0
+        guard readable else {
+            return 0
+        }
+        return readBuffer.current
+            .advanced(by: offset).pointee
     }
 
     public func move() -> Bool {

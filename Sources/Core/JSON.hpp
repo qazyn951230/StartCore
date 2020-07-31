@@ -36,8 +36,8 @@
 #include <vector>
 #include <string>
 #include <cmath> // for std::round
-#include "Config.h"
-#include "JSON.h"
+#include "include/Config.h"
+#include "include/JSON.h"
 
 #if (SP_JSON_MAP_TYPE != 1)
 #include <unordered_map>
@@ -138,7 +138,7 @@ public:
         explicit Data(string_t&& value) : uint64() {
             string = JSON::create<string_t>(std::move(value));
         }
-        
+
         void copy(const Data& other, const JSONType type) {
             uint64 = other.uint64;
             switch (type) {

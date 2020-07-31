@@ -25,11 +25,17 @@ public protocol Buffer {
 
     var count: Int { get }
     var capacity: Int { get }
+}
 
+public protocol MutableBuffer: Buffer {
     mutating func reserveCapacity(_ minimumCapacity: Int)
 
     mutating func append(_ newElement: Element)
     mutating func append<S>(contentsOf newElements: S) where S : Sequence, Element == S.Element
 
     mutating func removeAll(keepingCapacity keepCapacity: Bool)
+}
+
+public protocol MutableByteBuffer: MutableBuffer where Element == UInt8 {
+    mutating func append(_ buffer: UnsafePointer<UInt8>, count: Int)
 }

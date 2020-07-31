@@ -28,7 +28,7 @@
 #include <memory>
 #include <algorithm>
 #include <type_traits>
-#include "Config.h"
+#include "include/Config.h"
 
 SP_CPP_FILE_BEGIN
 
@@ -37,7 +37,7 @@ public:
     using char_t = char;
     using size_t = std::size_t;
 
-    ByteArray(size_t capacity = defaultCapacity): _start(nullptr), _end(nullptr), _current(nullptr) {
+    explicit ByteArray(size_t capacity = defaultCapacity): _start(nullptr), _end(nullptr), _current(nullptr) {
         if (capacity > 1) {
             _start = ByteArray::malloc(capacity);
             _end = _start + capacity;
