@@ -22,8 +22,8 @@
 
 import Foundation
 
-public protocol ByteOutputStream: OutputStream, TextOutputStream {
-    associatedtype Value = UInt8
+public protocol ByteOutputStream: OutputStream, TextOutputStream where Value == UInt8 {
+//    associatedtype Value = UInt8
 
     mutating func write(_ data: Data)
     mutating func write(_ string: String, encoding: String.Encoding)
@@ -50,11 +50,9 @@ public extension ByteOutputStream where Value == UInt8 {
     }
 }
 
-public protocol ByteInputSteam: InputStream {
-    associatedtype Value = UInt8
+public protocol ByteInputStream: InputStream where Value == UInt8 {
+//    associatedtype Value = UInt8
 
     mutating func read(count: Int) -> Data
     mutating func readAll() -> Data
 }
-
-public typealias ByteStream = ByteOutputStream & ByteInputSteam

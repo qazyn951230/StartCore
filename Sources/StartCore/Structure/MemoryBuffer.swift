@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-public struct MemoryBuffer: MutableByteBuffer {
+public struct MemoryBuffer {
     public typealias Element = UInt8
 
     public private(set) var end: UnsafePointer<UInt8>

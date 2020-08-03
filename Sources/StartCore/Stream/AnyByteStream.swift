@@ -20,138 +20,221 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import Foundation
-import Darwin.C
-
-public class AnyByteStream: ByteStream, UnsafeRandomAccessStream {
-    public typealias Index = Int
+public class AnyByteStream: ByteInputStream, ByteOutputStream {
     public typealias Value = UInt8
 
+    private let provider: Provider
+
+    public init<Stream>(input: Stream) where Stream: ByteInputStream {
+        provider = Provider.input(_ByteInputStream<Stream>(input))
+    }
+
+    public init<Stream>(output: Stream) where Stream: ByteOutputStream {
+        provider = Provider.output(_ByteOutputStream<Stream>(output))
+    }
+
     public var readable: Bool {
-        false
+        if case .input = provider {
+            return true
+        } else {
+            return false
+        }
     }
 
     public var writable: Bool {
-        false
+        if case .output = provider {
+            return true
+        } else {
+            return false
+        }
     }
 
     public func read() -> UInt8? {
-        fatalError("read() has not been implemented")
+        guard case let .input(stream) = provider else {
+            return nil
+        }
+        return stream.read()
     }
 
     public func read(count: Int) -> Data {
-        fatalError("read(count:) has not been implemented")
+        guard case let .input(stream) = provider else {
+            return Data()
+        }
+        return stream.read(count: count)
     }
 
     public func readAll() -> Data {
-        fatalError("readAll() has not been implemented")
-    }
-    
-    public func seek(offset: Int, direction: SeekDirection) -> Bool {
-        fatalError("seek(offset:direction:) has not been implemented")
-    }
-    
-    public func peek(count: Int) -> UnsafePointer<UInt8>? {
-        fatalError("peek(count:) has not been implemented")
-    }
-    
-    public func peek(into pointer: UnsafeMutablePointer<UInt8>, count: Int) -> Bool {
-        fatalError("peek(into:count:) has not been implemented")
-    }
-    
-    public func peek(into pointer: UnsafeMutableBufferPointer<UInt8>, count: Int? = nil) -> Bool {
-        fatalError("peek(into:count:) has not been implemented")
-    }
-    
-    public func peek() -> UInt8 {
-        fatalError("peek() has not been implemented")
-    }
-
-    public func peek(offset: Int) -> UInt8 {
-        fatalError("peek(offset:) has not been implemented")
-    }
-
-    @discardableResult
-    public func move() -> Bool {
-        fatalError("move() has not been implemented")
-    }
-    
-    @discardableResult
-    public func move(offset: Int) -> Bool {
-        fatalError("move(offset:) has not been implemented")
+        guard case let .input(stream) = provider else {
+            return Data()
+        }
+        return stream.readAll()
     }
 
     public func write(_ value: UInt8) {
-        fatalError("write(_:) has not been implemented")
+        guard case let .output(stream) = provider else {
+            return
+        }
+        stream.write(value)
     }
 
-    public func write<C>(_ value: C) where C : Collection, C.Element == UInt8 {
-        fatalError("write(_:) has not been implemented")
+    public func write<C>(_ value: C) where C: Collection, Value == C.Element {
+        guard case let .output(stream) = provider else {
+            return
+        }
+        stream.write(value)
+    }
+
+    public func write(_ string: String) {
+        guard case let .output(stream) = provider else {
+            return
+        }
+        stream.write(string)
+    }
+
+    public func write(_ string: String, encoding: String.Encoding) {
+        guard case let .output(stream) = provider else {
+            return
+        }
+        stream.write(string, encoding: encoding)
+    }
+
+    public func write(_ data: Data) {
+        guard case let .output(stream) = provider else {
+            return
+        }
+        stream.write(data)
     }
 
     public func flush() {
-        fatalError("flush() has not been implemented")
+        guard case let .output(stream) = provider else {
+            return
+        }
+        stream.flush()
     }
 
-    public static func file(_ fileStream: FileStream) -> AnyByteStream {
-        _AnyFileStream(file: fileStream)
+    public func close() {
+        switch provider {
+        case let .input(input):
+            input.close()
+        case let .output(output):
+            output.close()
+        }
     }
 
-    public static func file(read file: UnsafeMutablePointer<FILE>, behavior: FileStream.Behavior = .close)
-            -> AnyByteStream {
-        _AnyFileStream(file: FileStream(read: file, behavior: behavior))
-    }
-
-    public static func file(write file: UnsafeMutablePointer<FILE>, behavior: FileStream.Behavior = .close)
-            -> AnyByteStream {
-        _AnyFileStream(file: FileStream(write: file, behavior: behavior))
-    }
-
-    public static func file(read path: Path) throws -> AnyByteStream {
-        _AnyFileStream(file: try FileStream(read: path))
-    }
-
-    public static func file(write path: Path) throws -> AnyByteStream {
-        _AnyFileStream(file: try FileStream(write: path))
+    private enum Provider {
+        case input(_AnyByteInputStream)
+        case output(_AnyByteOutputStream)
     }
 }
 
-class _AnyFileStream: AnyByteStream {
-    var file: FileStream
+private class _AnyByteInputStream: ByteInputStream {
+    typealias Value = UInt8
 
-    override var readable: Bool {
-        file.readable
+    func read() -> UInt8? {
+        fatalError("\(#function) has not been implemented")
     }
 
-    override var writable: Bool {
-        file.writable
+    func read(count: Int) -> Data {
+        fatalError("\(#function) has not been implemented")
     }
 
-    init(file: FileStream) {
-        self.file = file
+    func readAll() -> Data {
+        fatalError("\(#function) has not been implemented")
     }
 
+    func close() {
+        fatalError("\(#function) has not been implemented")
+    }
+}
+
+private class _ByteInputStream<Stream>: _AnyByteInputStream where Stream: ByteInputStream {
+    private var stream: Stream
+
+    init(_ stream: Stream) {
+        self.stream = stream
+    }
+    
     override func read() -> UInt8? {
-        file.read()
+        stream.read()
     }
-
+    
     override func read(count: Int) -> Data {
-        file.read(count: count)
+        stream.read(count: count)
     }
-
+    
     override func readAll() -> Data {
-        file.readAll()
+        stream.readAll()
+    }
+    
+    override func close() {
+        stream.close()
+    }
+}
+
+private class _AnyByteOutputStream: ByteOutputStream {
+    typealias Value = UInt8
+    
+    func write(_ value: UInt8) {
+        fatalError("\(#function) has not been implemented")
     }
 
+    func write<C>(_ value: C) where C: Collection, Value == C.Element {
+        fatalError("\(#function) has not been implemented")
+    }
+
+    func write(_ string: String) {
+        fatalError("\(#function) has not been implemented")
+    }
+
+    func write(_ string: String, encoding: String.Encoding) {
+        fatalError("\(#function) has not been implemented")
+    }
+
+    func write(_ data: Data) {
+        fatalError("\(#function) has not been implemented")
+    }
+
+    func close() {
+        fatalError("\(#function) has not been implemented")
+    }
+
+    func flush() {
+        fatalError("\(#function) has not been implemented")
+    }
+}
+
+private class _ByteOutputStream<Stream>: _AnyByteOutputStream where Stream: ByteOutputStream {
+    private var stream: Stream
+    
+    init(_ stream: Stream) {
+        self.stream = stream
+    }
+    
     override func write(_ value: UInt8) {
-        file.write(value)
+        stream.write(value)
     }
-
-    override func write<C>(_ value: C) where C : Collection, C.Element == UInt8 {
-        file.write(value)
+    
+    override func write<C>(_ value: C) where C : Collection, Value == C.Element {
+        stream.write(value)
     }
-
+    
+    override func write(_ string: String) {
+        stream.write(string)
+    }
+    
+    override func write(_ string: String, encoding: String.Encoding) {
+        stream.write(string, encoding: encoding)
+    }
+    
+    override func write(_ data: Data) {
+        stream.write(data)
+    }
+    
+    override func close() {
+        stream.close()
+    }
+    
     override func flush() {
-        file.flush()
+        stream.flush()
     }
 }

@@ -20,214 +20,217 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import Foundation
 import Darwin.C
+import Foundation
 
-public final class FileStream: ByteStream, BufferStream, RandomAccessStream {
-    public typealias WriteBuffer = MemoryBuffer
-    public typealias ReadBuffer = MemoryBuffer
-    public typealias Value = UInt8
-    public typealias Index = Int
-    public static let defaultBufferCapacity = 1024
-
-    public let readable: Bool
-    public let writable: Bool
-    public var writeBuffer = MemoryBuffer(capacity: FileStream.defaultBufferCapacity)
-    public var readBuffer = MemoryBuffer(capacity: FileStream.defaultBufferCapacity)
-    public private(set) var error: Error?
-
-    let behavior: Behavior
-    let file: UnsafeMutablePointer<FILE>
-
-    public var hasError: Bool {
-        error != nil
+public struct FileStream {
+    private init() {
+        // Do nothing.
     }
 
-    public init(read file: UnsafeMutablePointer<FILE>, behavior: Behavior = Behavior.close) {
-        self.file = file
-        self.readable = true
-        self.writable = false
-        self.behavior = behavior
-    }
-
-    public init(write file: UnsafeMutablePointer<FILE>, behavior: Behavior = Behavior.close) {
-        self.file = file
-        self.readable = false
-        self.writable = true
-        self.behavior = behavior
-    }
-
-    public init(read path: Path) throws {
-        guard let file = fopen(path.string, "rb") else {
-            throw Errors.posix()
-        }
-        self.readable = true
-        self.writable = false
-        self.file = file
-        self.behavior = .close
-    }
-
-    public init(write path: Path) throws {
-        guard let file = fopen(path.string, "wb") else {
-            throw Errors.posix()
-        }
-        self.readable = false
-        self.writable = true
-        self.file = file
-        self.behavior = .close
-    }
-
-    deinit {
-        if behavior == Behavior.close {
-            fclose(file)
-        }
-    }
-
-    public func write(pointer: UnsafePointer<UInt8>, size: Int) {
-        guard writable, size > 0 else {
-            return
-        }
-        let raw = UnsafeRawPointer(pointer)
-        while true {
-            let n = fwrite(raw, 1, size, file)
-            if n == size {
-                break
-            } else {
-                if errno != EINTR {
-                    error = StartError.posix(errno)
-                    break
-                }
-            }
-        }
-    }
-
-    public func write(_ value: UInt8) {
-        guard writable else {
-            return
-        }
-        if writeBuffer.count + 1 > writeBuffer.capacity {
-            self.flush()
-        }
-        assert(writeBuffer.count + 1 <= writeBuffer.capacity)
-        writeBuffer.append(value)
-    }
-
-    public func write(_ data: Data) {
-        guard writable else {
-            return
-        }
-        data.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Void in
-            let buffer = raw.bindMemory(to: UInt8.self)
-            if let base = buffer.baseAddress {
-                self.write(pointer: base, size: buffer.count)
-            }
-        }
-    }
-
-    public func write<C>(_ value: C) where C: Collection, C.Element == UInt8 {
-        guard writable && value.isNotEmpty else {
-            return
-        }
-        if writeBuffer.count + value.count <= writeBuffer.capacity {
-            writeBuffer.append(contentsOf: value)
-            return
-        }
-        // buffer.count + value.count > buffer.capacity
-        self.flush()
-        let max = value.endIndex
-        var start = value.startIndex
-        var end = value.index(start, offsetBy: writeBuffer.capacity, limitedBy: max)
-        while let _end = end {
-            writeBuffer.append(contentsOf: value[start..<_end])
-            self.flush()
-            start = _end
-            end = value.index(start, offsetBy: writeBuffer.capacity, limitedBy: max)
-        }
-        if start != max {
-            writeBuffer.append(contentsOf: value[start..<max])
-        }
-    }
-
-    public func write(_ string: String) {
-        guard writable else {
-            return
-        }
-        write(string, encoding: .utf8)
-    }
-
-    public func write(_ string: String, encoding: String.Encoding) {
-        guard writable else {
-            return
-        }
-        if let data = string.data(using: encoding) {
-            self.write(data)
-        } else {
-            error = StartError.invalidStringEncoding(string, encoding)
-        }
-    }
-
-    public func flush() {
-        guard writable else {
-            return
-        }
-        write(pointer: writeBuffer.start, size: writeBuffer.count)
-        writeBuffer.removeAll(keepingCapacity: true)
-        fflush(file)
-    }
-
-    public func seek(offset: Int, direction: SeekDirection) -> Bool {
-        fseek(file, offset, direction.rawValue) == 0
-    }
-
-    public func peek() -> UInt8 {
-        guard readable else {
-            return 0
-        }
-        return readBuffer.current.pointee
-    }
-
-    public func peek(offset: Int) -> UInt8 {
-        guard readable else {
-            return 0
-        }
-        return readBuffer.current
-            .advanced(by: offset).pointee
-    }
-
-    public func move() -> Bool {
-        false
-    }
-
-    public func move(offset: Int) -> Bool {
-        false
-    }
-
-    public func read() -> UInt8? {
-        fatalError("read() has not been implemented")
-    }
-
-    public func read(count: Int) -> Data {
-        fatalError("read(count:) has not been implemented")
-    }
-
-    public func readAll() -> Data {
-        fatalError("readAll() has not been implemented")
-    }
-
-    public enum Behavior {
+    public enum Deallocator {
         case close
         case none
     }
 
-    public static func standardError() -> FileStream {
-        FileStream(write: stderr, behavior: .none)
+    public static var standardInput: FileInputStream {
+        FileInputStream(file: stderr, deallocator: .none)
     }
 
-    public static func standardInput() -> FileStream {
-        FileStream(read: stdin, behavior: .none)
+    public static var standardOutput: FileOutputStream {
+        FileOutputStream(file: stdout, deallocator: .none)
     }
 
-    public static func standardOutput() -> FileStream {
-        FileStream(write: stdout, behavior: .none)
+    public static var standardError: FileOutputStream {
+        FileOutputStream(file: stderr, deallocator: .none)
+    }
+}
+
+public final class FileInputStream: ByteInputStream {
+    public typealias Value = UInt8
+
+    private let file: UnsafeMutablePointer<FILE>
+    private let deallocator: FileStream.Deallocator
+
+    // nonzero value if the end of the stream has been reached, otherwise ​`0​`
+    var eof: Bool { feof(file) != 0 }
+
+    public init(file: UnsafeMutablePointer<FILE>, deallocator: FileStream.Deallocator = .close) {
+        self.file = file
+        self.deallocator = deallocator
+    }
+
+    public init(path: Path, mode: String = "rb") throws {
+        guard let file = fopen(path.string, mode) else {
+            throw Errors.posix()
+        }
+        self.file = file
+        deallocator = .close
+    }
+
+    deinit {
+        close()
+    }
+
+    public func read() -> UInt8? {
+        if eof {
+            return nil
+        }
+        var i: UInt8 = 0
+        let count = withUnsafeMutablePointer(to: &i) { p in
+            _read(to: p, count: 1).or(-1)
+        }
+        return count > 0 ? i : nil
+    }
+
+//    public func read(count: Int) -> [UInt8] {
+//        if count <= 0 || eof {
+//            return []
+//        }
+//        var size = -1
+//        let result = Array<UInt8>.init(unsafeUninitializedCapacity: count) { (pointer, initializedCount) in
+//            size = _read(to: pointer.baseAddress!, size: count)
+//            initializedCount = count
+//        }
+//        if size == count {
+//            return result
+//        } else if size > 0 {
+//            return Array(result[0..<count])
+//        } else {
+//            return []
+//        }
+//    }
+
+    public func read(count: Int) -> Data {
+        if count <= 0 || eof {
+            return Data()
+        }
+        let data = UnsafeMutablePointer<UInt8>.allocate(capacity: count)
+        let size = _read(to: data, count: count).or(-1)
+        if size > 0 {
+            return Data(bytesNoCopy: UnsafeMutableRawPointer(data), count: size, deallocator: .free)
+        } else {
+            return Data()
+        }
+    }
+
+    public func readAll() -> Data {
+        guard let current = position().orNil(),
+            fseek(file, 0 , SEEK_END) == 0,
+            let fileSize = position().orNil(),
+            fseek(file, current, SEEK_SET) == 0 else {
+            return Data()
+        }
+        let count = fileSize - current
+        let data = UnsafeMutablePointer<UInt8>.allocate(capacity: count)
+        let size = _read(to: data, count: count).or(-1)
+        if size > 0 {
+            return Data(bytesNoCopy: UnsafeMutableRawPointer(data), count: size, deallocator: .free)
+        } else {
+            return Data()
+        }
+    }
+    
+    private func position() -> Result<Int, Error> {
+        let n = ftell(file)
+        return n == -1 ? .failure(Errors.posix()) : .success(n)
+    }
+
+    private func _read(to pointer: UnsafeMutablePointer<UInt8>, count: Int) -> Result<Int, Error> {
+        assert(count > 0)
+        var n = -1
+        repeat {
+            // https://en.cppreference.com/w/c/io/fread
+            n = fread(pointer, 1, count, file)
+        } while n == -1 && errno == EINTR
+        if n == -1 {
+            return .failure(Errors.posix())
+        }
+        return .success(n)
+    }
+
+    public func close() {
+        if case .close = deallocator {
+            fclose(file)
+        }
+    }
+}
+
+public final class FileOutputStream: ByteOutputStream {
+    public typealias Value = UInt8
+
+    private let file: UnsafeMutablePointer<FILE>
+    private let deallocator: FileStream.Deallocator
+
+    public init(file: UnsafeMutablePointer<FILE>, deallocator: FileStream.Deallocator = .close) {
+        self.file = file
+        self.deallocator = deallocator
+    }
+
+    public init(path: Path, mode: String = "wb") throws {
+        guard let file = fopen(path.string, mode) else {
+            throw Errors.posix()
+        }
+        self.file = file
+        deallocator = .close
+    }
+
+    deinit {
+        close()
+    }
+
+    public func write(_ value: UInt8) {
+        _ = withUnsafePointer(to: value) { p in
+            _write(pointer: p, count: MemoryLayout<UInt8>.size)
+        }
+    }
+
+    public func write<C>(_ value: C) where C: Collection, Value == C.Element {
+        let count = value.count
+        let sucssess = value.withContiguousStorageIfAvailable { (pointer: UnsafeBufferPointer<UInt8>) -> Bool in
+            guard let base = pointer.baseAddress else {
+                return false
+            }
+            return _write(pointer: base, count: count)
+        }
+        if sucssess != nil {
+            return
+        }
+        let data = UnsafeMutablePointer<UInt8>.allocate(capacity: count)
+        var current = data
+        for item in value {
+            current.initialize(to: item)
+            current += 1
+        }
+        _ = _write(pointer: UnsafePointer<UInt8>(data), count: count)
+        data.deallocate()
+    }
+
+    private func _write(pointer: UnsafePointer<UInt8>, count: Int) -> Bool {
+        guard count > 0 else {
+            return false
+        }
+        let raw = UnsafeRawPointer(pointer)
+        while true {
+            // https://en.cppreference.com/w/c/io/fwrite
+            let n = fwrite(raw, 1, count, file)
+            if n == count {
+                return true
+            } else if errno != EINTR {
+                return false
+            } else {
+                continue
+            }
+        }
+    }
+
+    public func flush() {
+        fflush(file)
+    }
+
+    public func close() {
+        if case .close = deallocator {
+            fclose(file)
+        }
     }
 }

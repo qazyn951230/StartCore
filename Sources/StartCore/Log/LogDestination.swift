@@ -33,11 +33,11 @@ public extension LogDestination {
     }
 }
 
-public struct SimpleLogDestination: LogDestination {
-    private let stream: FileStream
+public class SimpleLogDestination: LogDestination {
+    private var stream: FileOutputStream
     
-    public init(stream: FileStream? = nil) {
-        self.stream = stream ?? FileStream.standardOutput()
+    public init(stream: FileOutputStream? = nil) {
+        self.stream = stream ?? FileStream.standardOutput
     }
     
     public func write(message: Log.Message) {

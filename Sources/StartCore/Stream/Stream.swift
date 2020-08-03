@@ -23,32 +23,18 @@
 public protocol InputStream {
     associatedtype Value
 
-    var readable: Bool { get }
-
     mutating func read() -> Value?
+
+    mutating func close()
 }
 
 public protocol OutputStream {
     associatedtype Value
 
-    var writable: Bool { get }
-
     mutating func write(_ value: Value)
     mutating func write<C>(_ value: C) where C: Collection, C.Element == Value
 
     mutating func flush()
-}
 
-public typealias Stream = InputStream & OutputStream
-
-public extension InputStream {
-    var readable: Bool {
-        true
-    }
-}
-
-public extension OutputStream {
-    var writable: Bool {
-        true
-    }
+    mutating func close()
 }

@@ -20,18 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import Foundation
-
-public class PropertyListReader {
-    init() {
-        // Do nothing.
-    }
-
-    public func read() {
-        // Do nothing.
-    }
-
-    public static func binaryReader(stream: AnyByteStream) -> PropertyListReader {
-        return BinaryPropertyListReader(stream: stream)
-    }
-}
+//import Foundation
+//
+//public class PropertyListReader {
+//    init() {
+//        // Do nothing.
+//    }
+//
+//    public func read() {
+//        // Do nothing.
+//    }
+//
+//    public static func binaryReader(stream: AnyByteStream) -> PropertyListReader {
+//        return BinaryPropertyListReader(stream: stream)
+//    }
+//}
