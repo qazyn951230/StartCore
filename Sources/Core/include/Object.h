@@ -20,4 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-@_exported import Core
+#ifdef ENABLE_FOUNDATION_INTEGRATION
+#import <Foundation/Foundation.h>
+#endif // ENABLE_FOUNDATION_INTEGRATION
+
+#import "Config.h"
+
+SP_C_FILE_BEGIN
+
+#ifdef ENABLE_FOUNDATION_INTEGRATION
+
+NSString *stringAddress(id object);
+size_t longAddress(id object);
+
+#endif // ENABLE_FOUNDATION_INTEGRATION
+
+SP_C_FILE_END

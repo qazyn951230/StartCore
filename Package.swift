@@ -13,7 +13,7 @@ let bundleTests: SwiftSetting = .define(
         "ENABLE_BUNDLE_TESTS" :
         "DISABLE_BUNDLE_TESTS")
 
-let foundationIntegration = environment("START_CORE_FOUNDATION_INTEGRATION", default: false) ?
+let foundationIntegration = environment("START_CORE_FOUNDATION_INTEGRATION", default: true) ?
     "ENABLE_FOUNDATION_INTEGRATION" :
     "DISABLE_FOUNDATION_INTEGRATION"
 
